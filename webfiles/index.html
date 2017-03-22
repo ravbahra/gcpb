@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+    <title>GCP Cloud Benchmark Tool</title>
+</head>
+
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <a href="#" class="brand-logo">Google Cloud Benchmark</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="col s12 m6">
+            <div class="card blue-grey darken-1">
+                <div class="card-content white-text">
+                    <span class="card-title">overall progress</span>
+                    <div id='progresscontainer'></div>
+                </div>
+            </div>
+        </div>
+
+        <div id='tablecontainer'></div>
+    </div>
+    <footer class="page-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col l6 s12">
+                    <h5 class="white-text">GCP Benchmark</h5>
+                    <p class="grey-text text-lighten-4">contact RBahra@slb.com to report problems</p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <div class="container">
+                <a class="grey-text text-lighten-4 right" href="#!">More Links</a>
+            </div>
+        </div>
+    </footer>
+
+
+    <!--<div>THIS IS WHERE THERE SCRIPTS START</div>-->
+
+    <script id='templateprogress' type='text/ractive'>
+        {{#with progressdata}}
+        <div class="row">
+            <div class="col s3">
+                <div class='text-test-remaining center'>
+                    <p>{{total_tests_completed}} / {{total_tests}}</p>
+                </div>
+                <div id='total_progress_container'></div>
+
+                <div class='text-test-name center'>
+                    <p>Current Test Progress:{{current_service}}</p>
+                    <p>{{#if currentregion!='noregion'}}{{currentregion}}{{/if}}</p>
+                </div>
+            </div>
+            <div class="col s3">
+                <div class='text-test-remaining center'>
+                    <p>{{dns_tests_completed}} / {{dns_total_tests}}</p>
+                </div>
+
+                <div id='dns_progress_container'></div>
+                <div class='text-test-name center'>
+                    <p>DNS Test Progress</p>
+                </div>
+            </div>
+            <div class="col s3">
+                <div class='text-test-remaining center'>
+                    <p>{{downlink_tests_completed}} / {{downlink_total_tests}}</p>
+                </div>
+
+                <div id='downlink_progress_container'></div>
+                <div class='text-test-name center'>
+                    <p>Downlink Test Progress</p>
+                </div>
+            </div>
+            <div class="col s3">
+                <div class='text-test-remaining center'>
+                    <p>{{latency_tests_completed}} / {{latency_total_tests}}</p>
+                </div>
+
+                <div id='latency_progress_container'></div>
+                <div class='text-test-name center'>
+                    <p>Latency Test Progress</p>
+                </div>
+            </div>
+        </div>
+        {{/with}}
+    </script>
+
+
+
+
+
+    <script id='templatetests' type='text/ractive'>
+        <!--<select value='{{selecteddisplay}}'>
+            <option >mean</option>
+            <option value="median">median</option>
+        </select>-->
+        <div class="switch">
+            <label>
+                        mean
+                    <input type="checkbox" value='{{selecteddisplay}}'>
+                    <span class="lever"></span>
+                    median
+                </label>
+        </div>
+
+
+
+        <div class="card horizontal z-depth-0">
+            <div class="card-image valign-wrapper">
+                <div id="googlecomputesvg"></div>
+            </div>
+            <div class="card-stacked">
+                <div class="card-content">
+                    <h5>google compute</h5>
+                </div>
+            </div>
+        </div>
+
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th>Region</th>
+                    <th>Latency ms</th>
+                    <th>Downlink [256KB - 10MB / 2 threads] Mb/s</th>
+                    <th>Downlink [1 - 128KB / 4 threads] Mb/s</th>
+                </tr>
+            </thead>
+            <tbody>
+
+
+                {{#each compute:region}}
+                <tr class-inprog="{{region==current_reg && current_svc=='compute'}}">
+                    <td>{{region}}</td>
+                    <td>
+                        <div>
+                            {{#if latency.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{latency.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if latency.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{latency.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{latency.median}}</p>
+                            {{/if}} {{/if}} {{#if latency.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{latency.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{latency.median}} partial</p>
+                            {{/if}} {{/if}} {{#if latency.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {{#if downlink2.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{downlink2.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if downlink2.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{downlink2.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{downlink2.median}}</p>
+                            {{/if}} {{/if}} {{#if downlink2.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{downlink2.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{downlink2.median}} partial</p>
+                            {{/if}} {{/if}} {{#if downlink2.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {{#if downlink4.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{downlink4.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if downlink4.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{downlink4.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{downlink4.median}}</p>
+                            {{/if}} {{/if}} {{#if downlink4.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{downlink4.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{downlink4.median}} partial</p>
+                            {{/if}} {{/if}} {{#if downlink4.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+                    </td>
+                </tr>
+
+                {{/each}}
+            </tbody>
+        </table>
+
+        <div class="card horizontal z-depth-0">
+            <div class="card-image valign-wrapper">
+                <div id="googlestoragesvg"></div>
+            </div>
+            <div class="card-stacked">
+                <div class="card-content">
+                    <h5>google storage</h5>
+                </div>
+            </div>
+        </div>
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th>Region</th>
+                    <th>Latency ms</th>
+                    <th>Downlink [256KB - 10MB / 2 threads] Mb/s</th>
+                    <th>Downlink [1 - 128KB / 4 threads] Mb/s</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each storage:region}}
+                <tr class-inprog="{{region==current_reg && current_svc=='compute'}}">
+                    <td>{{region}}</td>
+                    <td>
+                        <div>
+                            {{#if latency.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{latency.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if latency.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{latency.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{latency.median}}</p>
+                            {{/if}} {{/if}} {{#if latency.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{latency.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{latency.median}} partial</p>
+                            {{/if}} {{/if}} {{#if latency.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {{#if downlink2.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{downlink2.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if downlink2.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{downlink2.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{downlink2.median}}</p>
+                            {{/if}} {{/if}} {{#if downlink2.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{downlink2.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{downlink2.median}} partial</p>
+                            {{/if}} {{/if}} {{#if downlink2.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {{#if downlink4.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{downlink4.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if downlink4.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{downlink4.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{downlink4.median}}</p>
+                            {{/if}} {{/if}} {{#if downlink4.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{downlink4.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{downlink4.median}} partial</p>
+                            {{/if}} {{/if}} {{#if downlink4.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+                    </td>
+                </tr>
+
+                {{/each}}
+            </tbody>
+        </table>
+
+        <div class="card horizontal z-depth-0">
+            <div class="card-image valign-wrapper">
+                <div id="googlecdnsvg"></div>
+            </div>
+            <div class="card-stacked">
+                <div class="card-content">
+                    <h5>google cdn</h5>
+                </div>
+            </div>
+        </div>
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th>Latency ms</th>
+                    <th>Downlink [256KB - 10MB / 2 threads] Mb/s</th>
+                    <th>Downlink [1 - 128KB / 4 threads] Mb/s</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class-inprog="{{current_svc=='cdn'}}">
+                    <td>
+                        <div>
+                            {{#if cdn.latency.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{cdn.latency.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if cdn.latency.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{cdn.latency.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{cdn.latency.median}}</p>
+                            {{/if}} {{/if}} {{#if cdn.latency.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{cdn.latency.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{cdn.latency.median}} partial</p>
+                            {{/if}} {{/if}} {{#if cdn.latency.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+
+                    </td>
+                    <td>
+
+                        <div>
+                            {{#if cdn.downlink2.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{cdn.downlink2.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if cdn.downlink2.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{cdn.downlink2.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{cdn.downlink2.median}}</p>
+                            {{/if}} {{/if}} {{#if cdn.downlink2.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{cdn.downlink2.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{cdn.downlink2.median}} partial</p>
+                            {{/if}} {{/if}} {{#if cdn.downlink2.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+
+                    </td>
+                    <td>
+
+                        <div>
+                            {{#if cdn.downlink4.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{cdn.downlink4.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if cdn.downlink4.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{cdn.downlink4.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{cdn.downlink4.median}}</p>
+                            {{/if}} {{/if}} {{#if cdn.downlink4.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{cdn.downlink4.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{cdn.downlink4.median}} partial</p>
+                            {{/if}} {{/if}} {{#if cdn.downlink4.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+                    </td>
+
+                </tr>
+
+            </tbody>
+        </table>
+
+        <div class="card horizontal z-depth-0">
+            <div class="card-image valign-wrapper">
+                <div id="googlednssvg"></div>
+            </div>
+            <div class="card-stacked">
+                <div class="card-content">
+                    <h5>google dns</h5>
+                </div>
+            </div>
+        </div>
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th>Latency ms</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class-inprog="{{current_svc=='dns'}}">
+                    <td>
+                        <div>
+                            {{#if dns.latency.status=='queued'}}
+                            <div class="progress">
+                                <div class="determinate" style="width: {{dns.latency.progress}}%"></div>
+                            </div>
+                            {{/if}} {{#if dns.latency.status=='success'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultsuccess'>Mean : {{dns.latency.mean}} </p>
+                            {{else}}
+                            <p class='resultsuccess'>Median : {{dns.latency.median}}</p>
+                            {{/if}} {{/if}} {{#if dns.latency.status=='partial'}} {{#if selecteddisplay=='mean'}}
+                            <p class='resultpartial'>Mean : {{dns.latency.mean}} - partial</p>
+                            {{else}}
+                            <p class='resultpartial'>Median : {{dns.latency.median}} partial</p>
+                            {{/if}} {{/if}} {{#if dns.latency.status=='failure'}}
+                            <p class='resultfailure'>Failed</p>
+                            {{/if}}
+                        </div>
+
+                    </td>
+                </tr>
+
+
+            </tbody>
+        </table>
+
+
+
+
+
+
+    </script>
+
+    <script id='templategooglecompute' type='text/ractive'>
+        <svg xmlns="http://www.w3.org/2000/svg" style="" viewBox="0 0 128 128" x="0px" y="0px" width="64px" height="64px" xmlns:xml="http://www.w3.org/XML/1998/namespace"
+            xml:space="preserve" version="1.1">
+            <g id="BASE">
+                <linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="63.9997" y1="7.0336" x2="63.9997" y2="120.789">
+                    <stop style="stop-color: rgb(67, 135, 253);" offset="0" />
+                    <stop style="stop-color: rgb(70, 131, 234);" offset="1" />
+                </linearGradient>
+                <path style="fill: url(#SVGID_1_);" d="M 27.7906 115.217 L 1.54 69.7493 c -2.0541 -3.5578 -2.0541 -7.9412 0 -11.499 l 26.2506 -45.4672 c 2.0541 -3.5578 5.8503 -5.7495 9.9585 -5.7495 h 52.5012 c 4.1082 0 7.9044 2.1917 9.9585 5.7495 l 26.2506 45.4672 c 2.0541 3.5578 2.0541 7.9412 0 11.499 l -26.2506 45.4672 c -2.0541 3.5578 -5.8503 5.7495 -9.9585 5.7495 H 37.7491 C 33.6409 120.966 29.8448 118.774 27.7906 115.217 Z"
+                />
+            </g>
+            <g id="shadow">
+                <g>
+                    <defs>
+                        <path id="SVGID_5_" d="M 27.7911 115.217 L 1.5406 69.7493 c -2.0541 -3.5578 -2.0541 -7.9412 0 -11.499 l 26.2505 -45.4672 c 2.0541 -3.5578 5.8502 -5.7495 9.9585 -5.7495 h 52.501 c 4.1082 0 7.9044 2.1917 9.9585 5.7495 l 26.2505 45.4672 c 2.0541 3.5578 2.0541 7.9412 0 11.499 l -26.2505 45.4672 c -2.0541 3.5578 -5.8503 5.7495 -9.9585 5.7495 h -52.501 C 33.6413 120.966 29.8452 118.774 27.7911 115.217 Z"
+                        />
+                    </defs>
+                    <clipPath id="SVGID_2_">
+                        <use style="overflow: visible;" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#SVGID_5_" />
+                    </clipPath>
+                    <polygon style="opacity: 0.07; clip-path: url(&quot;#SVGID_2_&quot;);" points="119.219,83.1145 75.6354,39.5311 72.5312,46.2499 65.7812,39.4999 62.6562,46.1874 55.9847,39.5158 54.3438,47.6037 48.4062,48.6249 47.1743,53.9061 39.4913,55.7412 46.375,62.6249 39.5645,65.6581 46.375,72.4686 39.5208,75.3957 86.2031,122.078 97.6671,122.041"
+                    />
+                </g>
+            </g>
+            <g id="art">
+                <g>
+                    <path style="fill: #ffffff;" d="M 69.8304 57.0953 l -11.4085 0.0011 c -0.668 0 -1.2152 0.5466 -1.2152 1.2133 l 0.0012 11.4068 c 0 0.6667 0.5472 1.2152 1.2139 1.2152 h 11.4068 c 0.668 0 1.215 -0.5485 1.215 -1.2152 V 58.3098 C 71.0437 57.643 70.4979 57.0953 69.8304 57.0953"
+                    />
+                    <path style="fill: #ffffff;" d="M 87.8891 56.1759 c 0.5994 0 1.0895 -0.4919 1.0895 -1.0895 v -1.7768 c 0 -0.5975 -0.49 -1.0894 -1.0895 -1.0894 H 82.34 v -5.1871 c 0 -0.6662 -0.5483 -1.2139 -1.2138 -1.2139 h -5.2085 l 0.0011 -5.5704 c 0 -0.5957 -0.49 -1.0882 -1.0894 -1.0882 l -1.7774 0.0011 c -0.5994 0 -1.0894 0.4914 -1.0894 1.0888 l 0.0012 5.5686 h -5.8601 v -5.5704 c 0 -0.5957 -0.49 -1.0882 -1.0882 -1.0882 l -1.7786 0.0011 c -0.5994 0 -1.0894 0.4914 -1.0894 1.0888 l 0.0012 5.5686 l -5.86 0.0006 v -5.571 c 0 -0.5957 -0.4901 -1.0882 -1.0882 -1.0882 l -1.7781 0.0011 c -0.5982 0 -1.0894 0.4914 -1.0894 1.0888 l 0.0012 5.5693 h -5.2072 c -0.668 0 -1.2152 0.5471 -1.2152 1.2133 v 5.1871 h -5.5491 c -0.597 0 -1.0882 0.4914 -1.0882 1.0888 l 0.0012 1.7787 c 0 0.5982 0.49 1.0882 1.0882 1.0882 h 5.5479 l 0.0012 5.8606 l -5.5503 -0.0012 c -0.597 0 -1.0882 0.4907 -1.0882 1.0888 l 0.0012 1.7768 c 0 0.6001 0.49 1.0894 1.0882 1.0894 h 5.5491 v 5.8606 l -5.5503 -0.0012 c -0.597 0 -1.0882 0.4914 -1.0882 1.0888 l 0.0012 1.7768 c 0 0.6001 0.49 1.0895 1.0882 1.0895 h 5.5491 v 5.1891 c 0 0.6661 0.5471 1.2139 1.2139 1.2139 h 5.2072 v 5.5673 c 0 0.5999 0.4912 1.0895 1.0893 1.0895 h 1.7757 c 0.5981 0 1.0882 -0.4895 1.0882 -1.0895 l 0.0012 -5.5673 h 5.8588 l 0.0012 5.5673 c 0 0.5999 0.49 1.0895 1.0893 1.0895 h 1.7764 c 0.598 0 1.0882 -0.4895 1.0882 -1.0895 l 0.0011 -5.5673 h 5.8589 l 0.0012 5.5673 c 0 0.5999 0.49 1.0895 1.0893 1.0895 h 1.7751 c 0.5993 0 1.0895 -0.4895 1.0895 -1.0895 l 0.0011 -5.5673 h 5.2061 c 0.6668 0 1.2138 -0.5478 1.2138 -1.2139 l 0.0013 -5.1891 l 5.5491 -0.0012 c 0.5994 0 1.0895 -0.4888 1.0895 -1.0882 v -1.775 c 0 -0.5993 -0.49 -1.0894 -1.0895 -1.0894 H 82.34 v -5.8606 l 5.5491 -0.0012 c 0.5994 0 1.0895 -0.4888 1.0895 -1.0882 v -1.775 c 0 -0.5993 -0.49 -1.0895 -1.0895 -1.0895 H 82.34 v -5.8606 H 87.8891 Z M 78.2422 78.1307 H 50.0084 v -28.235 l 28.2362 -0.0012 L 78.2422 78.1307 Z"
+                    />
+                </g>
+            </g>
+            <g id="Guides">
+            </g>
+            </svg>
+
+    </script>
+    <script id='templategooglestorage' type='text/ractive'>
+        <svg xmlns="http://www.w3.org/2000/svg" style="" viewBox="0 0 128 128" x="0px" y="0px" width="64px" height="64px" xmlns:xml="http://www.w3.org/XML/1998/namespace"
+            xml:space="preserve" version="1.1">
+            <g id="BASE">
+                <linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="63.9997" y1="7.0336" x2="63.9997" y2="120.789">
+                    <stop style="stop-color: rgb(67, 135, 253);" offset="0" />
+                    <stop style="stop-color: rgb(70, 131, 234);" offset="1" />
+                </linearGradient>
+                <path style="fill: url(#SVGID_1_);" d="M 27.7906 115.217 L 1.54 69.7493 c -2.0541 -3.5578 -2.0541 -7.9412 0 -11.499 l 26.2506 -45.4672 c 2.0541 -3.5578 5.8503 -5.7495 9.9585 -5.7495 h 52.5012 c 4.1082 0 7.9044 2.1917 9.9585 5.7495 l 26.2506 45.4672 c 2.0541 3.5578 2.0541 7.9412 0 11.499 l -26.2506 45.4672 c -2.0541 3.5578 -5.8503 5.7495 -9.9585 5.7495 H 37.7491 C 33.6409 120.966 29.8448 118.774 27.7906 115.217 Z"
+                />
+            </g>
+            <g id="shadow">
+                <g>
+                    <defs>
+                        <path id="SVGID_5_" d="M 27.7911 115.217 L 1.5406 69.7493 c -2.0541 -3.5578 -2.0541 -7.9412 0 -11.499 l 26.2505 -45.4672 c 2.0541 -3.5578 5.8502 -5.7495 9.9585 -5.7495 h 52.501 c 4.1082 0 7.9044 2.1917 9.9585 5.7495 l 26.2505 45.4672 c 2.0541 3.5578 2.0541 7.9412 0 11.499 l -26.2505 45.4672 c -2.0541 3.5578 -5.8502 5.7495 -9.9585 5.7495 h -52.501 C 33.6413 120.966 29.8452 118.774 27.7911 115.217 Z"
+                        />
+                    </defs>
+                    <clipPath id="SVGID_2_">
+                        <use style="overflow: visible;" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#SVGID_5_" />
+                    </clipPath>
+                    <polygon style="opacity: 0.07; clip-path: url(&quot;#SVGID_2_&quot;);" points="118.938,83.9999 85.488,50.5503 49.3125,53.8749 42.3021,60.8645 48.2604,66.8228 42.362,77.2994 86.9974,121.935 97.8125,121.937"
+                    />
+                </g>
+            </g>
+            <g id="art">
+                <g>
+                    <path style="fill: #ffffff;" d="M 84.6999 50.2691 l -41.436 0.0012 c -0.6672 0 -1.2129 0.5457 -1.2129 1.2129 l 0.0012 8.5663 c 0 0.6658 0.5457 1.2117 1.2117 1.2117 h 41.4349 c 0.6671 0 1.2128 -0.5458 1.2128 -1.2117 V 51.482 C 85.9115 50.816 85.3669 50.2691 84.6999 50.2691 M 78.2839 58.2442 c -1.3669 0 -2.4754 -1.114 -2.4779 -2.4797 c 0.0025 -1.3718 1.1073 -2.4772 2.4779 -2.4772 c 1.3694 0 2.4791 1.1031 2.4791 2.4772 C 80.763 57.1327 79.6533 58.2442 78.2839 58.2442"
+                    />
+                    <path style="fill: #ffffff;" d="M 84.6999 66.7361 l -41.436 0.0012 c -0.6672 0 -1.2129 0.5463 -1.2129 1.2146 l 0.0012 8.5646 c 0 0.6658 0.5457 1.2129 1.2117 1.2129 h 41.4349 c 0.6671 0 1.2128 -0.5471 1.2128 -1.2129 v -8.5665 C 85.9115 67.2837 85.3669 66.7361 84.6999 66.7361 M 78.2839 74.7113 c -1.3669 0 -2.4754 -1.1134 -2.4779 -2.4797 c 0.0025 -1.3717 1.1073 -2.4766 2.4779 -2.4766 c 1.3694 0 2.4791 1.1042 2.4791 2.4766 C 80.763 73.6014 79.6533 74.7113 78.2839 74.7113"
+                    />
+                </g>
+            </g>
+            <g id="Guides">
+            </g>
+            </svg>
+    </script>
+
+    <script id='templategooglecdn' type='text/ractive'>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" x="0px" y="0px" width="64px" height="64px">
+            <defs>
+                <linearGradient id="a" gradientUnits="userSpaceOnUse" x1="63.9997" y1="7.0336" x2="63.9997" y2="120.789">
+                    <stop stop-color="#4387fd" offset="0" />
+                    <stop stop-color="#4683ea" offset="1" />
+                </linearGradient>
+                <clipPath id="b">
+                    <path fill="none" d="M 27.7911 115.217 L 1.5406 69.75 a 11.499 11.499 0 0 1 0 -11.499 l 26.25 -45.4672 a 11.499 11.499 0 0 1 9.9585 -5.75 H 90.25 a 11.499 11.499 0 0 1 9.9585 5.75 l 26.25 45.4672 a 11.499 11.499 0 0 1 0 11.499 l -26.25 45.4672 a 11.499 11.499 0 0 1 -9.9585 5.75 H 37.75 A 11.499 11.499 0 0 1 27.7911 115.217 Z"
+                    />
+                </clipPath>
+            </defs>
+            <title>CDN</title>
+            <path fill="url(#a)" d="M 27.7906 115.217 L 1.54 69.7493 a 11.499 11.499 0 0 1 0 -11.499 L 27.7906 12.7831 a 11.4991 11.4991 0 0 1 9.9585 -5.75 H 90.25 a 11.4991 11.4991 0 0 1 9.9585 5.75 L 126.459 58.25 a 11.499 11.499 0 0 1 0 11.499 l -26.2506 45.4672 a 11.4991 11.4991 0 0 1 -9.9585 5.75 H 37.7491 A 11.4991 11.4991 0 0 1 27.7906 115.217 Z"
+            />
+            <g clip-path="url(&quot;#b&quot;)">
+                <polygon opacity="0.07" points="122.5,88.542 74.854,40.896 63.25,36.75 52.999,49.29 59.979,56.271 56.179,60.012 49.179,53.012 36.5,63.25 40.901,74.901 88.021,122.021 98,122 122.5,88.542"
+                />
+            </g>
+            <polygon fill="#fff" points="64,30 53,41 53,49.311 64,38.311 75,49.311 75,41 64,30" />
+            <polygon fill="#fff" points="64,98 53,87 53,78.689 64,89.689 75,78.689 75,87 64,98" />
+            <polygon fill="#fff" points="30,64 41,75 49.311,75 38.311,64 49.311,53 41,53 30,64" />
+            <polygon fill="#fff" points="98,64 87,75 78.689,75 89.689,64 78.689,53 87,53 98,64" />
+            <rect fill="#fff" transform="translate(0 128) rotate(-90)" x="53" y="53" width="22" height="22" rx="1" ry="1" />
+        </svg>
+    </script>
+
+    <script id='templategoogledns' type='text/ractive'>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" x="0px" y="0px" width="64px" height="64px">
+            <defs>
+                <linearGradient id="a" gradientUnits="userSpaceOnUse" x1="63.9997" y1="7.0336" x2="63.9997" y2="120.789">
+                    <stop stop-color="#4387fd" offset="0" />
+                    <stop stop-color="#4683ea" offset="1" />
+                </linearGradient>
+                <clipPath id="b">
+                    <path fill="none" d="M 27.7911 115.217 L 1.5406 69.75 a 11.499 11.499 0 0 1 0 -11.499 l 26.25 -45.4672 a 11.499 11.499 0 0 1 9.9585 -5.75 H 90.25 a 11.499 11.499 0 0 1 9.9585 5.75 l 26.25 45.4672 a 11.499 11.499 0 0 1 0 11.499 l -26.25 45.4672 a 11.499 11.499 0 0 1 -9.9585 5.75 H 37.75 A 11.499 11.499 0 0 1 27.7911 115.217 Z"
+                    />
+                </clipPath>
+            </defs>
+            <title>DNS</title>
+            <path fill="url(#a)" d="M 27.7906 115.217 L 1.54 69.7493 a 11.499 11.499 0 0 1 0 -11.499 L 27.7906 12.7831 a 11.4991 11.4991 0 0 1 9.9585 -5.75 H 90.25 a 11.4991 11.4991 0 0 1 9.9585 5.75 L 126.459 58.25 a 11.499 11.499 0 0 1 0 11.499 l -26.2506 45.4672 a 11.4991 11.4991 0 0 1 -9.9585 5.75 H 37.7491 A 11.4991 11.4991 0 0 1 27.7906 115.217 Z"
+            />
+            <g clip-path="url(&quot;#b&quot;)">
+                <polygon opacity="0.07" points="124.156,78.719 85.708,40.271 43.75,41.875 42.281,52.656 49.375,59.75 43.188,60.875 42.309,71.746 53.438,82.875 42,84.938 78.156,121.094 98,122 124.156,78.719"
+                />
+            </g>
+            <rect fill="#fff" x="62" y="51" width="4" height="32" />
+            <rect fill="#fff" x="42" y="81" width="44" height="4" />
+            <rect fill="#fff" x="60" y="79" width="8" height="8" rx="0.8889" ry="0.8889" />
+            <path fill="#fff" d="M 42 59.963 V 71.037 a 0.97 0.97 0 0 0 0.9778 0.963 H 85.0222 A 0.97 0.97 0 0 0 86 71.037 V 59.963 A 0.97 0.97 0 0 0 85.0222 59 H 42.9778 A 0.97 0.97 0 0 0 42 59.963 Z M 50 67 H 46 V 63 h 4 v 4 Z"
+            />
+            <path fill="#fff" d="M 42 40.963 V 52.037 a 0.97 0.97 0 0 0 0.9778 0.963 H 85.0222 A 0.97 0.97 0 0 0 86 52.037 V 40.963 A 0.97 0.97 0 0 0 85.0222 40 H 42.9778 A 0.97 0.97 0 0 0 42 40.963 Z M 50 48 H 46 V 44 h 4 v 4 Z"
+            />
+        </svg>
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+    <!--<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.2/pure-min.css">-->
+    <style>
+        .inprog {
+            background-color: whitesmoke;
+        }
+        
+        .progress {
+            height: 10px;
+            margin-bottom: 7.5px;
+        }
+        
+        td,
+        th {
+            padding: 5px 5px;
+        }
+        
+        td p {
+            padding: 0px;
+            margin: 2px 2px;
+        }
+        
+        td {
+            width: 25%;
+        }
+        
+        nav {
+            background-color: #607d8b;
+        }
+        
+        footer.page-footer {
+            background-color: #607d8b;
+        }
+        
+        .gotafloater {
+            display: inline-block;
+        }
+        .resultpartial {
+            color: blue;
+        }
+        
+        .resultfailure {
+            color: red;
+        }
+    </style>
+    <script src='http://cdn.ractivejs.org/latest/ractive.js'></script>
+    <script type="text/javascript" src="web/js/underscore-min.js"></script>
+    <!--<script async type="text/javascript" src="//cloudharmony.com/rum/speedtest-google.js"></script>-->
+    <script type="text/javascript" src="web/js/main.js"></script>
+    <script type="text/javascript" src="web/js/objecthelper.js"></script>
+    <script type="text/javascript" src="web/js/progressbar.js"></script>
+    <script async type="text/javascript" src="//cloudharmony.com/rum/speedtest-google.js"></script>
+    <script type="text/javascript" src="web/js/cloudharmonycallback.js"></script>
+</body>
+
+</html>
